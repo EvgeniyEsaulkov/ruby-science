@@ -4,40 +4,12 @@ class OrdersController < ApplicationController
   end
 
   def create
-    @order = Order.new(params[:order])
-
-    basket.products.each do |product|
-      @order.order_items << OrderItem.new(
-        :product_id  => product.id,
-        :product_uid => product.uid,
-        :count       => basket.product_count(product),
-        :cost        => basket.product_cost(product)
-      )
-    end
+    @order = build_order
 
     if @order.save
-      @order.order_items.each {|i| basket.remove_product_id(i.product_id) }
-      user_orders << @order.id.to_s
+      complete_order
+
       flash[:new_order] = true
-
-      mail_config = app_settings.mail_config
-      mail_config = 'office@example.com' if mail_config.blank?
-      ActionMailer::Base.smtp_settings = SMTP_SETTINGS[mail_config]
-
-      Notifier.deliver_new_order_notification(
-        @order,
-        render_to_string(:template => 'admin/orders/show.xls', :layout => false),
-        mail_config
-      )
-
-      if app_settings.gcal_sms_notifier
-        logger.info "Sending SMS Notification"
-        SmsNotifier.send_new_order_notification(@order,
-          :gcal_login    => 'office@example.com',
-          :gcal_password => SMTP_SETTINGS['office@example.com'][:password]
-        ) rescue logger.error("SmsNotifier error")
-      end
-
       redirect_to @order
     else
       flash[:error] = "Необходимо заполнить поля подсвеченные красным"
@@ -46,27 +18,51 @@ class OrdersController < ApplicationController
   end
 
   def show
-    if user_orders.include?(params[:id])
-      @order = Order.find(params[:id])
-    end
+    find_order
 
-    render :file => "public/404.html", :layout => false, :status => 404 if @order.blank?
+    render_not_found_page unless @order
   end
 
   def index
-    if user_orders
-      @orders = Order.find(user_orders)
-      user_orders_update(@orders)
-    end
+    @orders = Order.find(user_orders)
+    user_orders_update(@orders)
   end
 
   private
 
+  def build_order
+    order = Order.new(params[:order])
+    order.order_items = basket.order_items
+
+    order
+  end
+
+  def complete_order
+    basket.remove_order_items(@order)
+    user_orders << @order.string_id
+    send_notifications
+  end
+
+  def find_order
+    return unless user_orders.include?(params[:id])
+
+    @order = Order.find(params[:id])
+  end
+
+  def send_notifications
+    SendEmailNotification.call(order: @order)
+    SendSmsNotification.call(order: @order)
+  end
+
   def user_orders
-    (session[:orders] ||= []) # .select{|o| o.to_s.size > 20}
+    session[:orders] ||= []
   end
 
   def user_orders_update(orders)
-    session[:orders] = orders.map(&:id).map(&:to_s)
+    session[:orders] = orders.map(&:string_id)
+  end
+
+  def render_not_found_page
+    render :file => "public/404.html", :layout => false, :status => 404
   end
 end
