@@ -1,16 +1,18 @@
 # app/models/consultation.rb
 class Consultation < ActiveRecord::Base
-  attr_accessible :content, :author_name, :author_email
-  
-  def author_name_string
-    author_name.present? ? author_name : 'Аноним'
-  end
+  attr_accessible :content
+
+  delegate :author_name, :author_email, to: :author
 end
 
 class Question < ActiveRecord::Base
-  attr_accessible :content, :author_name, :author_email
-  
-  def author_name_string
-    author_name.present? ? author_name : 'Аноним'
+  attr_accessible :content
+
+  delegate :author_name, :author_email, to: :author
+end
+
+class Author < ActiveRecord::Base
+  def author_name
+    name.presence || "Аноним"
   end
 end
