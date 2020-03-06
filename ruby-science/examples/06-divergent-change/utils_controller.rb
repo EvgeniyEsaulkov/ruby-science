@@ -1,12 +1,7 @@
 class UtilsController
    def search
-    redirect_to adv_search_url and return if params[:q].blank?
-    @books = case params[:field]
-      when 'author' then Book.found_by_author(params[:q])
-      when 'title' then Book.found_by_title(params[:q])
-      when 'number' then Book.found_by_number(params[:q])
-      else Book.found(params[:q])
-    end
+    result = FindBooks.call(field: params[:field], term: params[:q])
+    @books = result.success? ? result.books : []
 
     respond_to do |format|
       format.html { render 'shared/_books' }
