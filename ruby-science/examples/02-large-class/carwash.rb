@@ -14,61 +14,16 @@ class Carwash < ActiveRecord::Base
   has_many :price_groups
   has_many :services
   has_many :photos
-  has_many :tickets
+  has_many :tickets, through: :boxes
 
   default_scope where(locked: false, enabled: true)
-
-  def boxes_with_tickets_for_date(date = nil)
-    bxs = self.boxes.all
-    return {} if bxs.empty?
-    tickets = Ticket.for_date(date).where(:box_id => bxs.collect(&:id)).all
-    rs = {}
-    bxs.each {|b| rs[b] = tickets.find_all {|t| t.box_id == b.id}}
-
-    rs
-  end
-
-  def visible_boxes_with_tickets_for_date(date = nil)
-    bxs = self.boxes.where(visible_in_search_results: true).all
-    return {} if bxs.empty?
-    tickets = Ticket.for_date(date).where(:box_id => bxs.collect(&:id)).all
-    rs = {}
-    bxs.each {|b| rs[b] = tickets.find_all {|t| t.box_id == b.id}}
-
-    rs
-  end
 
   def timeline(date, time, opts = {})
     CarwashTimeline.new(self, date, time, opts)
   end
 
-  def new_tickets
-    tickets.where(:status => Ticket::NEW).order('date desc, start_time asc')
-  end
-
-  def open_tickets
-    tickets.where(:status => Ticket::OPEN).order('date desc, start_time asc')
-  end
-
-  def pretty_title
-    "&laquo;#{title}&raquo; #{address}".html_safe
-  end
-
-  def url_string
-    return '' if url.blank?
-    url.gsub('http://', '').gsub('www.', '')
-  end
-
-  def start_time_string
-    self.start_time.strftime('%H:%M')
-  end
-
   def start_time_string=(start_time_string)
     self.start_time = Time.zone.parse(start_time_string)
-  end
-
-  def end_time_string
-    self.end_time.strftime('%H:%M')
   end
 
   def end_time_string=(end_time_string)
@@ -76,10 +31,10 @@ class Carwash < ActiveRecord::Base
   end
 
   def all_day_long?
-    true if self.start_time.strftime('%H:%M') == "00:00" && self.end_time.in_minutes > 1400
+    self.start_time.strftime('%H:%M') == "00:00" && self.end_time.in_minutes > 1400
   end
 
   def open_at_time?(s_time)
-    res = s_time.in_minutes > self.end_time.in_minutes || s_time.in_minutes < self.start_time.in_minutes ? false : true
+    s_time.in_minutes > self.end_time.in_minutes || s_time.in_minutes < self.start_time.in_minutes
   end
 end
