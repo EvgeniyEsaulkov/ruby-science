@@ -18,18 +18,6 @@ class Carwash < ActiveRecord::Base
 
   default_scope where(locked: false, enabled: true)
 
-  def boxes_with_tickets_for_date(date = nil)
-    boxes.with_tickets(date).each_with_object({}) do |box, hsh|
-      hsh[box] = box.tickets.for_date(date)
-    end
-  end
-
-  def visible_boxes_with_tickets_for_date(date = nil)
-    boxes.visible.with_tickets(date).each_with_object({}) do |box, hsh|
-      hsh[box] = box.tickets.for_date(date)
-    end
-  end
-
   def timeline(date, time, opts = {})
     CarwashTimeline.new(self, date, time, opts)
   end
