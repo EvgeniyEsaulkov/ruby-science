@@ -1,11 +1,11 @@
 class CarwashesController < ApplicationController
+  expose :ticket, :fetch_ticket
+
   def summary
     code = params[:code]
-    ticket = fetch_ticket
 
-    if ticket.confirmed_by?(code)
-      ticket.update(status: Ticket::NEW)
 
+    if ticket.activate(params[:code])
       redirect_to summary_carwash_path
     else
       redirect_to confirm_step_carwash_path, alert: "Код подтверждения неправильный"
@@ -15,7 +15,6 @@ class CarwashesController < ApplicationController
   private
 
   def fetch_ticket
-    userdata = session[:userdata]
-    Ticket.find(userdata[:ticket_id])
+    Ticket.find(session[:userdata][:ticket_id])
   end
 end
