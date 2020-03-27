@@ -43,10 +43,10 @@ class Carwash < ActiveRecord::Base
   end
 
   def all_day_long?
-    true if self.start_time.strftime('%H:%M') == "00:00" && self.end_time.in_minutes > 1400
+    self.start_time.strftime('%H:%M') == "00:00" && self.end_time.in_minutes > 1400
   end
 
   def open_at_time?(s_time)
-    res = s_time.in_minutes > self.end_time.in_minutes || s_time.in_minutes < self.start_time.in_minutes ? false : true
+    s_time.in_minutes > self.end_time.in_minutes || s_time.in_minutes < self.start_time.in_minutes
   end
 end
