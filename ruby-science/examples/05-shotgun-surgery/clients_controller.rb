@@ -1,7 +1,6 @@
 class ClientsController
    def create
     @client = @carwash.clients.new(client_params)
-    set_bonus_and_state
 
     if @client.save
       redirect_to @client, notice: 'Клиент успешно добавлен'
@@ -11,8 +10,6 @@ class ClientsController
   end
 
   def update
-    set_bonus_and_state
-
     if @client.update_attributes(client_params)
       redirect_to @client, notice: 'Данные клиента сохранены'
     else
@@ -22,10 +19,18 @@ class ClientsController
 
   private
 
-  def set_bonus_and_state
-    return unless CarwashPolicy.new(current_user, @carwash).manage?
+  def client_params
+    client_params = params.require(:client).permit(:name, :email)
 
-    @client.set_bonus_and_state(params[:client])
+    if CarwashPolicy.new(current_user, @carwash).manage?
+      client_params.merge!(special_client_params)
+    end
+
+    client_params
+  end
+
+  def special_client_params
+    params.require(:client).permit(:bonus, :status)
   end
 end
 
@@ -39,12 +44,5 @@ class CarwashPolicy
 
   def manage?
     user.is_owner_of?(carwash) || user.is_manager?
-  end
-end
-
-class Client < ApplicationRecord
-  def set_bonus_and_state(params)
-    self.bonus = params[:bonus] if params[:bonus].present?
-    self.status = params[:status]
   end
 end
