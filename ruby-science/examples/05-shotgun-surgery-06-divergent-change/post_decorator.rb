@@ -8,6 +8,6 @@ class PostDecorator < ApplicationDecorator
   end
 
   def comments_are_present?
-    comments.size.positive?
+    object.comments.present?
   end
 end
