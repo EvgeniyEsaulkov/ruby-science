@@ -7,7 +7,6 @@ hr
 .detail
   .date = @post.date(format: :long)
 
-- if @post.comments.present?
+- if @post.comments_are_present?
   ul
-    @post.comments.each do |comment|
-      li = "#{comment.body} | #{comment.date(format: :short)}"
+    render @post.comments
