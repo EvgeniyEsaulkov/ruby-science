@@ -1,7 +1,6 @@
 class UtilsController
    def search
-    result = FindBooks.call(field: params[:field], term: params[:q])
-    @books = result.success? ? result.books : []
+    @books = FindBooks.call(field: params[:field], term: params[:q])
 
     respond_to do |format|
       format.html { render 'shared/_books' }
