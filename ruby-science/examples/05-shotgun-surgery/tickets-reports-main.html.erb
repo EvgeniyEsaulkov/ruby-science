@@ -1,1 +1,1 @@
-<% @total_sum = @tickets.sum(&:total_cost_with_bonus) %>
+<% @total_sum = TicketsPresenter.new(@tickets).total_sum %>
