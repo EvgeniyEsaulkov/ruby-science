@@ -3,9 +3,7 @@ class User < ApplicationRecord
     "#{first_name} #{last_name}"
   end
 
-  def email_with_privacy
-    return nil if privacy_settings.exists?(hide_email: true)
-
-    email
+  def email_hidden?
+    privacy_settings.exists?(hide_email: true)
   end
 end

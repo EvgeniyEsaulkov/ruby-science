@@ -12,6 +12,10 @@ class TaskClosedMailer < ActionMailer::Base
   private
 
   def from(contact)
-    contact.email_with_privacy || "no-reply.#{SecureRandom.uuid}-task-closed@flatstack.com"
+    if contact.email_hidden?
+      "no-reply.#{SecureRandom.uuid}-task-closed@flatstack.com"
+    else
+      contact.email
+    end
   end
 end
