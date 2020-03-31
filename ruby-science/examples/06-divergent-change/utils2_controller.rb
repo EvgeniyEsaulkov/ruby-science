@@ -1,27 +1,35 @@
 class UtilsController < ApplicationController
    # GET /
   def index
-    washes = Carwash.with_coordinates
-    begin
-      user_lat, user_lng = determine_user_coords
-      @carwashes = washes.select{|cw| haversine_distance(user_lat, user_lng, cw.lat, cw.lng) < 3000}
-    rescue Errno::ENOENT
-      logger.warn('Problem accessing GeoLiteCity.dat')
-      @carwashes = []
-    rescue NoMethodError
-      @carwashes = []
+    user_lat, user_lng = determine_user_coords
+    result = FindNearestCarwashes.call(latitude: user_lat, longitude: user_lng)
+    if result.success?
+      @carwashes = result.carwashes
+    else
+      redirect_to root_path, alert: result.error
     end
   end
-  
+
   # GET /nearest_carwashes
   def nearest_carwashes
-    washes = Carwash.with_coordinates
-    lat, lng = params[:lat].to_f, params[:lng].to_f
-    @carwashes = washes.select {|cw| haversine_distance(lat, lng, cw.lat, cw.lng) < 3000}
-    if params[:map]
-      render "utils/_onmap_carwashes", layout: false
+    result = FindNearestCarwashes.call(latitude: params[:lat].to_f, longitude: params[:lng].to_f)
+
+    if result.success?
+      @carwashes = result.carwashes
+
+      render carwashes_view, layout: false
     else
-      render "_carwashes", layout: false
+      redirect_to root_path, alert: result.error
     end
-  end  
+  end
+
+  private
+
+  def carwashes_view
+    if params[:map]
+      "utils/_onmap_carwashes"
+    else
+      "_carwashes"
+    end
+  end
 end
