@@ -1,13 +1,12 @@
 class FirstContactMailer < ActionMailer::Base
   def message(user, contact)
+    return if user.id == contact.id
 
-    if user.id != contact.id
-      mail(
-        to: contact.email,
-        subject: "Hello from #{user.first_name} #{user.last_name}",
-        from: from
-      )
-    end
+    mail(
+      to: contact.email,
+      subject: "Hello from #{user.full_name}",
+      from: from
+    )
   end
 
   private
